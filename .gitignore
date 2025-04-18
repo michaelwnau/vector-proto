@@ -41,3 +41,7 @@ next-env.d.ts
 .env
 
 /media
+
+# Other files
+CLAUDE.md 
+.cursorfiles
