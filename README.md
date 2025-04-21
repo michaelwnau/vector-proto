@@ -1,88 +1,81 @@
-# Payload Blank Starter
+# Vector Proto - Job Board Project
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/payloadcms/payload/tree/main/templates/with-vercel-mongodb&project-name=payload-project&env=PAYLOAD_SECRET&build-command=pnpm%20run%20ci&stores=%5B%7B%22type%22:%22blob%22%7D%5D&integration-ids=oac_jnzmjqM10gllKmSrG0SGrHOH)
+This project is built on PayloadCMS and Next.js with integration to an external VRE Job Board API microservice.
 
-This template comes configured with the bare minimum to get started on anything you need.
+## Job Board API Integration
 
-## Quick start
+This project integrates with the "vre-job-board-api" microservice to ingest and manage job-related data including:
 
-Click the 'Deploy' button above to spin up this template directly into Vercel hosting. It will first prompt you save this template into your own Github repo so that you own the code and can make any changes you want to it.
+- Jobs
+- Employers
+- Job Fairs
+- Breakout Sessions
+- Vector Data for AI-powered search
 
-Set up the following services and secrets and then once the app has been built and deployed you will be able to visit your site at the generated URL.
-From this point on you can access your admin panel at `/admin` of your app URL, create an admin user and then click the 'Seed the database' button in the dashboard to add content into your app.
+The integration is handled through a service layer that syncs data between the external API and the local PayloadCMS collections. The API documentation can be found in the `/API_DOCUMENTATION.md` file.
 
-### Services
+## Collections
 
-This project uses the following services integrated into Vercel which you will need to click "Add" and "Connect" for:
+The following collections have been configured for the Job Board functionality:
 
-Mongo Atlas - MongoDB-based cloud database used to host your data
+- **Users**: Authentication and user management
+- **Media**: File uploads and management
+- **Veterans**: Veteran profiles with job-seeking capabilities
+- **Jobs**: Job listings synced from the external API
+- **Employers**: Company profiles synced from the external API
+- **JobFairs**: Virtual and in-person job fair events
+- **BreakoutSessions**: Career development sessions at job fairs
+- **VectorData**: Vector embeddings for AI-powered job matching
 
-Vercel Blob Storage - object storage used to host your files such as images and videos
+## API Routes
 
-The connection variables will automatically be setup for you on Vercel when these services are connected.
+- `/api-test`: Tests the connection to the Job Board API
+- `/api/sync`: Syncs data from the external API to local collections
 
-#### Secrets
+## Environment Variables
 
-You will be prompted to add the following secret values to your project. These should be long unguessable strong passwords, you can also use a password manager to generate one for these.
+The following environment variables are required for API integration:
 
-PAYLOAD_SECRET - used by Payload to sign secrets like JWT tokens
+```
+JOB_BOARD_API_URL=http://localhost:8000
+JOB_BOARD_API_EMAIL=your-api-user@example.com
+JOB_BOARD_API_PASSWORD=your-api-password
+```
 
-## Quick Start - local setup
+## Docker Setup
 
-To spin up this template locally, follow these steps:
+This project uses Docker Compose to run both the PayloadCMS application and the external VRE Job Board API microservice. The Docker Compose configuration includes:
 
-### Clone
+1. **payload**: The PayloadCMS + Next.js application
+2. **mongo**: MongoDB database shared between services
+3. **vre-job-board-api**: The external microservice that provides job data
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+To start the project with Docker:
 
-### Development
+```bash
+docker-compose up
+```
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URI` and `BLOB_READ_WRITE_TOKEN` from your Vercel project to your `.env` if you want to use Vercel Blob and the Neon database that was created for you.
+## Development
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+1. Clone the repository
+2. Copy `.env.example` to `.env` and update environment variables
+3. Run `pnpm install` to install dependencies
+4. Run `pnpm dev` to start the development server
+5. Open `http://localhost:3000` to view the application
+6. Access the admin panel at `http://localhost:3000/admin`
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+## API Sync Process
 
-#### Docker (Optional)
+The application will sync with the external API by:
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+1. Authenticating with the API using configured credentials
+2. Fetching data from the API endpoints
+3. Creating or updating local collections to match the API data
+4. Tracking synchronization status with timestamp fields
 
-To do so, follow these steps:
-
-- Modify the `MONGODB_URI` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URI` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
-
-## How it works
-
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
-
-### Collections
-
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
-
-- #### Users (Authentication)
-
-  Users are auth-enabled collections that have access to the admin panel.
-
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
-
-- #### Media
-
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
-
-### Docker
-
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
-
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
-
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+You can trigger a sync manually by sending a POST request to the `/api/sync` endpoint.
 
 ## Questions
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+If you have any issues or questions, reach out to the project maintainers or refer to the PayloadCMS documentation at [https://payloadcms.com/docs](https://payloadcms.com/docs).

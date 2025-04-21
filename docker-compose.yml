@@ -11,12 +11,18 @@ services:
     working_dir: /home/node/app/
     command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm dev"
     depends_on:
-      - vector-mongo
-      # - postgres
+      - mongo
+      - vre-job-board-api
     env_file:
       - .env
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/vector-proto
+      - PAYLOAD_SECRET=vector-proto-secret-key
+      - JOB_BOARD_API_URL=http://vre-job-board-api:8000
+      - JOB_BOARD_API_EMAIL=admin@example.com
+      - JOB_BOARD_API_PASSWORD=password123
 
-  # Ensure your DATABASE_URI uses 'mongo' as the hostname ie. mongodb://mongo/my-db-name
+  # MongoDB database
   mongo:
     image: mongo:latest
     ports:
@@ -28,16 +34,22 @@ services:
     logging:
       driver: none
 
-  # Uncomment the following to use postgres
-  # postgres:
-  #   restart: always
-  #   image: postgres:latest
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
+  # VRE Job Board API microservice
+  vre-job-board-api:
+    image: ghcr.io/name-of-org/vre-job-board-api:latest  # Replace with actual image name and tag
+    ports:
+      - '8000:8000'
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/vre-job-board
+      - SECRET_KEY=your-vre-job-board-secret-key
+      - ADMIN_EMAIL=admin@example.com
+      - ADMIN_PASSWORD=password123
+    depends_on:
+      - mongo
+    volumes:
+      - vre-job-board-data:/app/data
 
 volumes:
   data:
-  # pgdata:
   node_modules:
+  vre-job-board-data:

@@ -70,6 +70,11 @@ export interface Config {
     users: User;
     media: Media;
     veterans: Veteran;
+    jobs: Job;
+    employers: Employer;
+    'job-fairs': JobFair;
+    'breakout-sessions': BreakoutSession;
+    'vector-data': VectorDatum;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -79,6 +84,11 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     veterans: VeteransSelect<false> | VeteransSelect<true>;
+    jobs: JobsSelect<false> | JobsSelect<true>;
+    employers: EmployersSelect<false> | EmployersSelect<true>;
+    'job-fairs': JobFairsSelect<false> | JobFairsSelect<true>;
+    'breakout-sessions': BreakoutSessionsSelect<false> | BreakoutSessionsSelect<true>;
+    'vector-data': VectorDataSelect<false> | VectorDataSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -121,8 +131,25 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: string;
-  role: 'counselor' | 'admin' | 'veteran';
+  role: 'counselor' | 'admin' | 'veteran' | 'employer';
   fullName: string;
+  is_active?: boolean | null;
+  /**
+   * ID from the external API
+   */
+  external_id?: number | null;
+  breakout_sessions?: (string | BreakoutSession)[] | null;
+  employers?: (string | Employer)[] | null;
+  job_fairs?: (string | JobFair)[] | null;
+  saved_jobs?: (string | Job)[] | null;
+  applied_jobs?: (string | Job)[] | null;
+  /**
+   * API synchronization information
+   */
+  api_sync?: {
+    last_synced?: string | null;
+    sync_source?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -133,6 +160,86 @@ export interface User {
   loginAttempts?: number | null;
   lockUntil?: string | null;
   password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "breakout-sessions".
+ */
+export interface BreakoutSession {
+  id: string;
+  topic: string;
+  leader: string;
+  description?: string | null;
+  job_fair: string | JobFair;
+  is_active?: boolean | null;
+  users?: (string | User)[] | null;
+  session_date?: string | null;
+  session_time?: string | null;
+  /**
+   * ID from the external API
+   */
+  external_id?: number | null;
+  /**
+   * API synchronization information
+   */
+  api_sync?: {
+    last_synced?: string | null;
+    sync_source?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-fairs".
+ */
+export interface JobFair {
+  id: string;
+  description: string;
+  fair_date: string;
+  users?: (string | User)[] | null;
+  employers?: (string | Employer)[] | null;
+  /**
+   * ID from the external API
+   */
+  external_id?: number | null;
+  location?: string | null;
+  virtual_link?: string | null;
+  /**
+   * API synchronization information
+   */
+  api_sync?: {
+    last_synced?: string | null;
+    sync_source?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "employers".
+ */
+export interface Employer {
+  id: string;
+  company_name: string;
+  description?: string | null;
+  is_active?: boolean | null;
+  user_likes?: (string | User)[] | null;
+  job_fairs?: (string | JobFair)[] | null;
+  /**
+   * ID from the external API
+   */
+  external_id?: number | null;
+  logo?: (string | null) | Media;
+  /**
+   * API synchronization information
+   */
+  api_sync?: {
+    last_synced?: string | null;
+    sync_source?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -152,6 +259,32 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs".
+ */
+export interface Job {
+  id: string;
+  title: string;
+  description: string;
+  employer: string | Employer;
+  is_active?: boolean | null;
+  applicants?: (string | Veteran)[] | null;
+  user_saves?: (string | User)[] | null;
+  /**
+   * ID from the external API
+   */
+  external_id?: number | null;
+  /**
+   * API synchronization information
+   */
+  api_sync?: {
+    last_synced?: string | null;
+    sync_source?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -189,6 +322,45 @@ export interface Veteran {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vector-data".
+ */
+export interface VectorDatum {
+  id: string;
+  title: string;
+  description?: string | null;
+  tags?:
+    | {
+        tag?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  vector_data?:
+    | {
+        value?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  linked_resource_type?: ('jobs' | 'employers' | 'veterans') | null;
+  /**
+   * ID of the linked resource
+   */
+  linked_resource_id?: string | null;
+  /**
+   * ID from the external API
+   */
+  external_id?: string | null;
+  /**
+   * API synchronization information
+   */
+  api_sync?: {
+    last_synced?: string | null;
+    sync_source?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -205,6 +377,26 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'veterans';
         value: string | Veteran;
+      } | null)
+    | ({
+        relationTo: 'jobs';
+        value: string | Job;
+      } | null)
+    | ({
+        relationTo: 'employers';
+        value: string | Employer;
+      } | null)
+    | ({
+        relationTo: 'job-fairs';
+        value: string | JobFair;
+      } | null)
+    | ({
+        relationTo: 'breakout-sessions';
+        value: string | BreakoutSession;
+      } | null)
+    | ({
+        relationTo: 'vector-data';
+        value: string | VectorDatum;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -255,6 +447,19 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   role?: T;
   fullName?: T;
+  is_active?: T;
+  external_id?: T;
+  breakout_sessions?: T;
+  employers?: T;
+  job_fairs?: T;
+  saved_jobs?: T;
+  applied_jobs?: T;
+  api_sync?:
+    | T
+    | {
+        last_synced?: T;
+        sync_source?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -313,6 +518,123 @@ export interface VeteransSelect<T extends boolean = true> {
   resume?: T;
   counselor?: T;
   user?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs_select".
+ */
+export interface JobsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  employer?: T;
+  is_active?: T;
+  applicants?: T;
+  user_saves?: T;
+  external_id?: T;
+  api_sync?:
+    | T
+    | {
+        last_synced?: T;
+        sync_source?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "employers_select".
+ */
+export interface EmployersSelect<T extends boolean = true> {
+  company_name?: T;
+  description?: T;
+  is_active?: T;
+  user_likes?: T;
+  job_fairs?: T;
+  external_id?: T;
+  logo?: T;
+  api_sync?:
+    | T
+    | {
+        last_synced?: T;
+        sync_source?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-fairs_select".
+ */
+export interface JobFairsSelect<T extends boolean = true> {
+  description?: T;
+  fair_date?: T;
+  users?: T;
+  employers?: T;
+  external_id?: T;
+  location?: T;
+  virtual_link?: T;
+  api_sync?:
+    | T
+    | {
+        last_synced?: T;
+        sync_source?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "breakout-sessions_select".
+ */
+export interface BreakoutSessionsSelect<T extends boolean = true> {
+  topic?: T;
+  leader?: T;
+  description?: T;
+  job_fair?: T;
+  is_active?: T;
+  users?: T;
+  session_date?: T;
+  session_time?: T;
+  external_id?: T;
+  api_sync?:
+    | T
+    | {
+        last_synced?: T;
+        sync_source?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "vector-data_select".
+ */
+export interface VectorDataSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  vector_data?:
+    | T
+    | {
+        value?: T;
+        id?: T;
+      };
+  linked_resource_type?: T;
+  linked_resource_id?: T;
+  external_id?: T;
+  api_sync?:
+    | T
+    | {
+        last_synced?: T;
+        sync_source?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
