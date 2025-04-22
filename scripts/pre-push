@@ -1,0 +1,175 @@
+#!/usr/bin/env python
+"""
+Git pre-push hook to update CHANGELOG.md based on commits being pushed.
+"""
+import sys
+import subprocess
+import re
+from datetime import date
+
+def get_commits_to_push():
+    """Parse pre-push stdin to get list of commit SHAs to include."""
+    input_lines = sys.stdin.read().splitlines()
+    commits = []
+    seen = set()
+    for line in input_lines:
+        parts = line.split()
+        if len(parts) < 4:
+            continue
+        local_ref, local_sha, remote_ref, remote_sha = parts
+        # Skip deletions
+        if local_sha == '0000000000000000000000000000000000000000':
+            continue
+        rev_range = f'{remote_sha}..{local_sha}'
+        try:
+            output = subprocess.check_output(
+                ['git', 'rev-list', '--no-merges', rev_range],
+                stderr=subprocess.DEVNULL
+            ).decode().splitlines()
+        except subprocess.CalledProcessError:
+            output = []
+        for c in output:
+            if c not in seen:
+                seen.add(c)
+                commits.append(c)
+    return commits
+
+def get_commit_info(commits):
+    """Gather subject and date for each commit SHA."""
+    commit_list = []
+    for sha in commits:
+        short = sha[:7]
+        try:
+            subj = subprocess.check_output(
+                ['git', 'show', '-s', '--format=%s', sha]
+            ).decode().strip()
+        except subprocess.CalledProcessError:
+            continue
+        try:
+            date_str = subprocess.check_output(
+                ['git', 'show', '-s', '--format=%ci', sha]
+            ).decode().split()[0]
+        except subprocess.CalledProcessError:
+            date_str = date.today().isoformat()
+        commit_list.append({'hash': short, 'subject': subj, 'date': date_str})
+    # sort by date ascending, then reverse for latest first
+    commit_list.sort(key=lambda x: x['date'])
+    commit_list.reverse()
+    return commit_list
+
+def categorize(commits):
+    """Map commits to changelog categories."""
+    cats = {'Added': [], 'Changed': [], 'Fixed': []}
+    for ci in commits:
+        subj = ci['subject']
+        low = subj.lower()
+        if low.startswith('feat') or low.startswith('add'):
+            cat = 'Added'
+        elif low.startswith('fix') or low.startswith('bugfix') or low.startswith('correct'):
+            cat = 'Fixed'
+        else:
+            cat = 'Changed'
+        entry = f'- {subj} [{ci["hash"]} - {ci["date"]}]'
+        cats[cat].append(entry)
+    return cats
+
+def ensure_changelog(cats):
+    filename = 'CHANGELOG.md'
+    header = [
+        '# Changelog',
+        '',
+        'All notable changes to the VRE Job Board API will be documented in this file.',
+        '',
+        'The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),',
+        'and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).',
+        '',
+    ]
+    today = date.today().isoformat()
+    unreleased_heading = f'## [Unreleased] - {today}'
+    try:
+        with open(filename, 'r') as f:
+            lines = f.read().splitlines()
+    except FileNotFoundError:
+        lines = []
+    if not lines:
+        # Create new changelog
+        lines = header + [unreleased_heading, '']
+        for cat in ['Added', 'Changed', 'Fixed']:
+            if cats.get(cat):
+                lines.append(f'### {cat}')
+                for e in cats[cat]:
+                    lines.append(e)
+                lines.append('')
+    else:
+        # Find or insert Unreleased heading
+        try:
+            i_unrel = next(i for i, l in enumerate(lines) if l.startswith('## [Unreleased]'))
+            lines[i_unrel] = unreleased_heading
+        except StopIteration:
+            # Insert after header
+            insert_at = len(header)
+            lines[insert_at:insert_at] = [unreleased_heading, '']
+            i_unrel = insert_at
+        # Determine end of Unreleased section
+        try:
+            i_next = next(i for i, l in enumerate(lines[i_unrel+1:], start=i_unrel+1) if l.startswith('## '))
+        except StopIteration:
+            i_next = len(lines)
+        # Track existing hashes
+        existing = set(re.search(r'\[([0-9a-f]+)', l).group(1) for l in lines if re.search(r'\[([0-9a-f]+)', l))
+        # Insert new entries
+        for cat in ['Added', 'Changed', 'Fixed']:
+            entries = cats.get(cat, [])
+            if not entries:
+                continue
+            # Find section
+            try:
+                sec_start = next(i for i, l in enumerate(lines[i_unrel+1:i_next], start=i_unrel+1) if l.strip() == f'### {cat}')
+            except StopIteration:
+                # Section not present, append at end of Unreleased
+                pos = i_next
+                new_block = [''] + [f'### {cat}']
+                for e in entries:
+                    h_match = re.search(r'\[([0-9a-f]+)', e)
+                    if h_match and h_match.group(1) in existing:
+                        continue
+                    new_block.append(e)
+                new_block.append('')
+                lines[pos:pos] = new_block
+                i_next += len(new_block)
+                continue
+            # Section exists, find end
+            sec_end = sec_start + 1
+            while sec_end < i_next and not lines[sec_end].startswith('### '):
+                sec_end += 1
+            # Gather new entries
+            new_entries = []
+            for e in entries:
+                h_match = re.search(r'\[([0-9a-f]+)', e)
+                if h_match and h_match.group(1) in existing:
+                    continue
+                new_entries.append(e)
+            if new_entries:
+                # Insert and add trailing blank line
+                lines[sec_end:sec_end] = new_entries + ['']
+                i_next += len(new_entries) + 1
+    # Write back
+    with open(filename, 'w') as f:
+        f.write('\n'.join(lines) + '\n')
+    # If file changed, stop push to allow commit
+    try:
+        subprocess.run(['git', 'diff', '--quiet', filename], check=True)
+    except subprocess.CalledProcessError:
+        print(f'{filename} updated. Please review and commit the changes.')
+        sys.exit(1)
+
+def main():
+    commits = get_commits_to_push()
+    if not commits:
+        sys.exit(0)
+    infos = get_commit_info(commits)
+    cats = categorize(infos)
+    ensure_changelog(cats)
+
+if __name__ == '__main__':
+    main()

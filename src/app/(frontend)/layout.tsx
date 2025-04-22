@@ -1,5 +1,6 @@
 import React from 'react'
 import './styles.css'
+import { ThemeProvider } from '@/components/theme-provider'
 
 export const metadata = {
   description: 'A blank template using Payload in a Next.js app.',
@@ -11,8 +12,16 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
   return (
     <html lang="en">
+      <head />
       <body>
-        <main>{children}</main>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -79,3 +79,14 @@ You can trigger a sync manually by sending a POST request to the `/api/sync` end
 ## Questions
 
 If you have any issues or questions, reach out to the project maintainers or refer to the PayloadCMS documentation at [https://payloadcms.com/docs](https://payloadcms.com/docs).
+
+## Git Hooks
+
+To enable automatic changelog generation on pre-push, run the following in your repository:
+
+```bash
+git config core.hooksPath scripts
+chmod +x scripts/pre-push
+```
+
+This will execute the `scripts/pre-push` hook before each push, updating `CHANGELOG.md` with any new commits. If the changelog is modified, the push will be halted to allow you to review and commit the changes.
