@@ -74,6 +74,7 @@ export interface Config {
     employers: Employer;
     'job-fairs': JobFair;
     'breakout-sessions': BreakoutSession;
+    'veteran-activities': VeteranActivity;
     'vector-data': VectorDatum;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -88,6 +89,7 @@ export interface Config {
     employers: EmployersSelect<false> | EmployersSelect<true>;
     'job-fairs': JobFairsSelect<false> | JobFairsSelect<true>;
     'breakout-sessions': BreakoutSessionsSelect<false> | BreakoutSessionsSelect<true>;
+    'veteran-activities': VeteranActivitiesSelect<false> | VeteranActivitiesSelect<true>;
     'vector-data': VectorDataSelect<false> | VectorDataSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -322,6 +324,27 @@ export interface Veteran {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "veteran-activities".
+ */
+export interface VeteranActivity {
+  id: string;
+  veteran: string | Veteran;
+  user: string | User;
+  activityType:
+    | 'Counselor Appointment'
+    | 'Resume Review'
+    | 'Interview Prep'
+    | 'Employer Follow-Up'
+    | 'Job Fair Participation'
+    | 'Outcome Verification'
+    | 'Other';
+  notes?: string | null;
+  timestamp: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "vector-data".
  */
 export interface VectorDatum {
@@ -393,6 +416,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'breakout-sessions';
         value: string | BreakoutSession;
+      } | null)
+    | ({
+        relationTo: 'veteran-activities';
+        value: string | VeteranActivity;
       } | null)
     | ({
         relationTo: 'vector-data';
@@ -604,6 +631,19 @@ export interface BreakoutSessionsSelect<T extends boolean = true> {
         last_synced?: T;
         sync_source?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "veteran-activities_select".
+ */
+export interface VeteranActivitiesSelect<T extends boolean = true> {
+  veteran?: T;
+  user?: T;
+  activityType?: T;
+  notes?: T;
+  timestamp?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -12,6 +12,7 @@ import { Employers } from './collections/Employers'
 import { JobFairs } from './collections/JobFairs'
 import { BreakoutSessions } from './collections/BreakoutSessions'
 import { VectorData } from './collections/VectorData'
+import VeteranActivity from './collections/VeteranActivity'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -24,14 +25,15 @@ export default buildConfig({
     },
   },
   collections: [
-    Users, 
-    Media, 
-    Veterans, 
-    Jobs, 
-    Employers, 
-    JobFairs, 
-    BreakoutSessions, 
-    VectorData
+    Users,
+    Media,
+    Veterans,
+    Jobs,
+    Employers,
+    JobFairs,
+    BreakoutSessions,
+    VeteranActivity,
+    VectorData,
   ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
