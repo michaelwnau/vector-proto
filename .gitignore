@@ -45,3 +45,6 @@ next-env.d.ts
 # Other files
 CLAUDE.md 
 .cursorfiles
+.kiro
+.github\chatmodes
+.github\chatmodes\Plan.chatmode.md
